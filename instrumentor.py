@@ -3,9 +3,7 @@ import argparse
 import re
 import os
 from pathlib import Path
-from flask import Flask
-from flask import request
-from flask import Response
+from flask import Flask,redirect,request,Response
 
 
 
@@ -88,10 +86,15 @@ def report():
     parametre = request.args.get("params")
     dosya = request.args.get("file")
     global main_satir
-    main_satir += f"<span>{dosya}({satir}) -> {fonksiyon}({parametre})</span>"
-    print(main_satir)
+    main_satir = f"<span>{dosya}({satir}) -> {fonksiyon}({parametre})</span>" + main_satir
     return ""
 
+
+@app.route("/clean")
+def temizle():
+    global main_satir
+    main_satir = ""
+    return redirect(f"http://{ipadresi}:{portnum}/")
 
 
 @app.route("/")
@@ -102,8 +105,17 @@ def hello_world():
     body {
         background-color: #90D0C5;
     }
+    .header {
+        text-align: match-parent;
+    }
     h1 {
-        text-align: center;
+        display: inline-block;
+    }
+    a {
+        color: darkred;
+        float: right;
+        font-size: 22px;
+        margin: 25px 25px 0 0;
     }
     span {
         display: block;
@@ -114,7 +126,7 @@ def hello_world():
 </style>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head>
-<body><h1>PHP instrumentor system</h1>"""+main_satir+"</body></html>"
+<body><div class="header"><h1>PHP instrumentor system </h1> <a href="http://""" + f'{ipadresi}:{portnum}/clean">sudo rm -rf /logs</a> </div><hr>{main_satir}</body></html>'
     response = Response(dondur)
     response.headers['Refresh'] = f'1; url=http://{ipadresi}:{portnum}/'
     return response
