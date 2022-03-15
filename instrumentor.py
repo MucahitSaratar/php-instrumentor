@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import base64
 import argparse
 import re
 import os
@@ -59,8 +60,13 @@ def make_instrument():
                 patern = f"([^A-Za-z-_0-9]|^){anlikfonksiyon}\("
                 donen = re.findall(patern,satir)
                 if len(donen) > 0:
+                    myargs = "".join(re.findall(f"([^A-Za-z-_0-9]|^){anlikfonksiyon}\((.*)\);",satir)[0])
+                    verborse(f"arguments : {myargs}")
                     satnum += 1
-                    inject = f'system("curl http://{ipadresi}:{portnum}/report?function={anlikfonksiyon}\&line={satnum}\&file={simdikidosya}\&params=not_configured");\n'
+                    if len(myargs) <= 0:
+                        inject = f'system("curl http://{ipadresi}:{portnum}/report?function={anlikfonksiyon}\&line={satnum}\&file={simdikidosya}\&params=cannot_configured");\n'
+                    else:
+                        inject = f'system("curl http://{ipadresi}:{portnum}/report?function={anlikfonksiyon}\&line={satnum}\&file={simdikidosya}\&params=" . base64_encode({myargs}));\n'
                     sonhal += inject
                     if not have:
                         sonhal += satir
@@ -83,7 +89,7 @@ main_satir = ""
 def report():
     fonksiyon = request.args.get("function")
     satir = request.args.get("line")
-    parametre = request.args.get("params")
+    parametre = str(base64.b64decode(request.args.get("params")), "utf-8")
     dosya = request.args.get("file")
     global main_satir
     main_satir = f"<span>{dosya}({satir}) -> {fonksiyon}({parametre})</span>" + main_satir
